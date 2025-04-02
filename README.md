@@ -1,12 +1,12 @@
-# Market Sentiment Analysis System
+# CryptoPulse: Cryptocurrency Sentiment Analysis System
 
-An automated system that analyzes financial news, market data, and influencer statements to provide personalized trading recommendations based on market sentiment.
+An automated system that analyzes cryptocurrency news, market data, and blockchain trends to provide personalized trading recommendations based on crypto market sentiment.
 
 ## Features
 
-- **Multi-Agent Architecture**: Leverages crewAI to orchestrate specialized agents for different aspects of market analysis
-- **Daily Sentiment Analysis**: Collects and analyzes global financial news, company-specific developments, and key influencer statements
-- **Portfolio-Aware Recommendations**: Generates trading recommendations tailored to user's portfolio and preferences
+- **Multi-Agent Architecture**: Leverages crewAI to orchestrate specialized agents for different aspects of crypto market analysis
+- **Daily Sentiment Analysis**: Collects and analyzes global cryptocurrency news, token-specific developments, and market trends
+- **Portfolio-Aware Recommendations**: Generates trading recommendations tailored to user's crypto portfolio and preferences
 - **Caching System**: Efficiently reuses API responses to minimize costs
 - **API & CLI Interfaces**: Access via RESTful API or command line
 
@@ -16,8 +16,8 @@ An automated system that analyzes financial news, market data, and influencer st
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/market-sentiment.git
-cd market-sentiment
+git clone https://github.com/yourusername/cryptopulse-backend.git
+cd cryptopulse-backend
 
 # Create and activate virtual environment
 python -m venv venv
@@ -37,13 +37,13 @@ cp .env.template .env
 # You'll need:
 # - OpenAI API key
 # - Bing Search API key
-# - Alpha Vantage API key
+# - CoinMarketCap API key
 ```
 
 ### 3. Create Portfolio and Preferences Files
 
 See examples in the `examples/` directory:
-- `portfolio.json`: Your stock holdings
+- `portfolio.json`: Your cryptocurrency holdings
 - `preferences.json`: Your investment preferences
 
 ### 4. Running the Application
@@ -52,7 +52,7 @@ See examples in the `examples/` directory:
 
 ```bash
 # Run a one-time analysis
-python -m src.market_sentiment.cli --portfolio examples/portfolio.json --preferences examples/preferences.json --output analysis.json
+python -m src.marketpulse.cli --portfolio examples/portfolio.json --preferences examples/preferences.json --output analysis.json
 ```
 
 #### As a Web Service:
@@ -82,13 +82,16 @@ Where `request.json` contains:
 {
   "portfolio": {
     "holdings": [
-      {"ticker": "AAPL", "company": "Apple Inc.", "allocation": 15, "sector": "Technology"}
+      {"symbol": "BTC", "name": "Bitcoin", "allocation": 40, "category": "Layer 1"},
+      {"symbol": "ETH", "name": "Ethereum", "allocation": 30, "category": "Layer 1"},
+      {"symbol": "SOL", "name": "Solana", "allocation": 15, "category": "Layer 1"},
+      {"symbol": "LINK", "name": "Chainlink", "allocation": 10, "category": "Oracle"},
+      {"symbol": "UNI", "name": "Uniswap", "allocation": 5, "category": "DeFi"}
     ]
   },
   "preferences": {
-    "risk_tolerance": "moderate",
-    "preferred_sectors": ["Technology"],
-    "preferred_regions": ["US"],
+    "risk_tolerance": "aggressive",
+    "preferred_categories": ["Layer 1", "DeFi", "Gaming"],
     "investment_horizon": "medium-term"
   }
 }
@@ -107,14 +110,16 @@ railway up
 
 The system uses several cost-optimization strategies:
 
-1. **Intelligent Caching**: API responses are cached to avoid redundant calls
+1. **Intelligent Caching**: API responses are cached to avoid redundant calls (with shorter timeframes for crypto's volatility)
 2. **Shared Global Analysis**: Market-wide data is shared among all users
 3. **GPT-4o-mini**: Uses efficient LLM to minimize token costs
-4. **Scheduled Execution**: Runs only during market days
+4. **24/7 Analysis**: Unlike traditional markets, crypto trades 24/7, so the system is designed for continuous analysis
 
 ## Future Enhancements
 
-- Interactive Brokers integration for automated trading
-- Email delivery of daily recommendations
+- Integration with popular crypto wallets for automated portfolio importing
+- On-chain metrics integration for deeper insights
+- Technical indicator analysis
+- Social sentiment analysis from crypto Twitter/Discord/Telegram
 - User dashboard for tracking recommendation performance
 - Custom news source integrations

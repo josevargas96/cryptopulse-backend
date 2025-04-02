@@ -2,7 +2,7 @@ import logging
 logging.getLogger('opentelemetry.trace').setLevel(logging.ERROR)
 
 from crewai.tools import BaseTool
-from typing import Type
+from typing import Type, List, Optional
 from pydantic import BaseModel, Field
 from langchain_community.utilities import BingSearchAPIWrapper
 import os
@@ -14,15 +14,15 @@ class NewsSearchInput(BaseModel):
     """Input schema for NewsSearchTool."""
     query: str = Field(
         ...,
-        description="Search query to find financial news."
+        description="Search query to find cryptocurrency news."
     )
 
 class FinancialNewsSearchTool(BaseTool):
-    name: str = "financial_news_search"
+    name: str = "crypto_news_search"
     description: str = (
-        "Use this tool to search for financial and economic news. "
-        "It can find articles about companies, sectors, economic indicators, "
-        "and market trends from financial news sources."
+        "Use this tool to search for cryptocurrency and blockchain news. "
+        "It can find articles about cryptocurrencies, blockchain projects, DeFi, "
+        "NFTs, and crypto market trends from specialized news sources."
     )
     args_schema: Type[BaseModel] = NewsSearchInput
     bing_search: BingSearchAPIWrapper = None
@@ -52,7 +52,8 @@ class FinancialNewsSearchTool(BaseTool):
         
         # If no cache or cache is old, make the actual API call
         try:
-            results = self.bing_search.run(f"financial news {query}")
+            # Update search query to focus on cryptocurrency news
+            results = self.bing_search.run(f"cryptocurrency crypto blockchain news {query}")
             
             # Create logs directory if it doesn't exist
             os.makedirs(".logs", exist_ok=True)
@@ -70,63 +71,90 @@ class FinancialNewsSearchTool(BaseTool):
             return f"Error performing search: {str(e)}"
 
 
-class StockQuoteInput(BaseModel):
-    """Input schema for StockQuoteSearchTool."""
+class CryptoQuoteInput(BaseModel):
+    """Input schema for CryptoQuoteTool."""
     symbol: str = Field(
         ...,
-        description="Stock ticker symbol to get quote data for."
+        description="Cryptocurrency symbol to get quote data for (e.g., 'BTC', 'ETH')."
     )
 
-class StockQuoteTool(BaseTool):
-    name: str = "stock_quote"
+class CryptoCategory(BaseModel):
+    """Represents a cryptocurrency category."""
+    name: str = Field(..., description="Category name (e.g., 'Layer 1', 'DeFi', 'NFT Platform')")
+    id: Optional[str] = Field(None, description="Category ID in the CoinMarketCap system")
+
+class CryptoQuoteTool(BaseTool):
+    name: str = "crypto_quote"
     description: str = (
-        "Use this tool to get current stock price data and basic information. "
-        "Provide a ticker symbol to get current price, change, volume, market cap, "
+        "Use this tool to get current cryptocurrency price data and basic information. "
+        "Provide a cryptocurrency symbol to get current price, change, volume, market cap, "
         "and other basic data."
     )
-    args_schema: Type[BaseModel] = StockQuoteInput
+    args_schema: Type[BaseModel] = CryptoQuoteInput
 
     def _run(self, symbol: str) -> str:
-        """Run the tool to get stock quote data"""
+        """Run the tool to get cryptocurrency quote data"""
         cache_dir = ".cache/quotes"
         os.makedirs(cache_dir, exist_ok=True)
         
         # Create a cache file for this symbol
         cache_file = f"{cache_dir}/{symbol.upper()}.json"
         
-        # Check if we have a recent cached result (less than 1 hour old)
+        # Check if we have a recent cached result (less than 30 minutes old for crypto)
         if os.path.exists(cache_file):
             file_time = datetime.fromtimestamp(os.path.getmtime(cache_file))
-            if datetime.now() - file_time < timedelta(hours=1):
+            if datetime.now() - file_time < timedelta(minutes=30):
                 with open(cache_file, 'r') as f:
                     return f.read()
         
         # If no cache or cache is old, make the actual API call
         try:
-            # Using Alpha Vantage API as an example
-            api_key = os.getenv('ALPHA_VANTAGE_API_KEY')
-            url = f"https://www.alphavantage.co/query?function=GLOBAL_QUOTE&symbol={symbol}&apikey={api_key}"
+            # Using CoinMarketCap API
+            api_key = os.getenv('COINMARKETCAP_API_KEY')
+            url = "https://pro-api.coinmarketcap.com/v1/cryptocurrency/quotes/latest"
             
-            response = requests.get(url)
+            headers = {
+                'X-CMC_PRO_API_KEY': api_key,
+                'Accept': 'application/json'
+            }
+            
+            # Convert common symbols to their IDs if needed
+            # For simplicity, use symbol directly - in production, you might want to convert BTC -> bitcoin, etc.
+            params = {
+                'symbol': symbol.upper(),
+                'convert': 'USD'
+            }
+            
+            response = requests.get(url, headers=headers, params=params)
             data = response.json()
             
             # Create logs directory if it doesn't exist
             os.makedirs(".logs", exist_ok=True)
             
             # Log usage
-            with open(".logs/alphavantage_usage.log", "a") as log:
+            with open(".logs/coinmarketcap_usage.log", "a") as log:
                 log.write(f"{datetime.now().isoformat()},quote,{symbol}\n")
             
             # Format the response
-            if "Global Quote" in data and data["Global Quote"]:
-                quote = data["Global Quote"]
+            if 'data' in data and symbol.upper() in data['data']:
+                crypto_data = data['data'][symbol.upper()]
+                quote = crypto_data['quote']['USD']
+                
+                # Extract category data if available
+                category = None
+                if 'category' in crypto_data:
+                    category = crypto_data['category']
+                
                 result = {
-                    "symbol": quote.get("01. symbol", ""),
-                    "price": quote.get("05. price", ""),
-                    "change": quote.get("09. change", ""),
-                    "change_percent": quote.get("10. change percent", ""),
-                    "volume": quote.get("06. volume", ""),
-                    "latest_trading_day": quote.get("07. latest trading day", "")
+                    "symbol": crypto_data['symbol'],
+                    "name": crypto_data['name'],
+                    "price": str(quote['price']),
+                    "change_24h": str(quote['percent_change_24h']),
+                    "change_7d": str(quote['percent_change_7d']),
+                    "volume_24h": str(quote['volume_24h']),
+                    "market_cap": str(quote['market_cap']),
+                    "category": category,
+                    "last_updated": quote['last_updated']
                 }
                 formatted_result = json.dumps(result, indent=2)
                 
@@ -136,68 +164,110 @@ class StockQuoteTool(BaseTool):
                 
                 return formatted_result
             else:
-                return f"Error: Could not retrieve quote data for {symbol}."
+                error_message = data.get('status', {}).get('error_message', f"Could not retrieve quote data for {symbol}")
+                return f"Error: {error_message}"
                 
         except Exception as e:
-            return f"Error retrieving stock quote: {str(e)}"
+            return f"Error retrieving cryptocurrency quote: {str(e)}"
 
 
-class InfluencerMonitorInput(BaseModel):
-    """Input schema for InfluencerMonitorTool."""
-    person: str = Field(
-        ...,
-        description="Name of the key market influencer to monitor (e.g., 'Elon Musk', 'Jerome Powell')."
+class CryptocurrencyListInput(BaseModel):
+    """Input schema for CryptocurrencyListTool."""
+    limit: int = Field(
+        default=100,
+        description="Number of cryptocurrencies to retrieve (1-5000)."
+    )
+    category: Optional[str] = Field(
+        None,
+        description="Category filter (e.g., 'defi', 'layer-1', 'nft')"
     )
 
-class InfluencerMonitorTool(BaseTool):
-    name: str = "influencer_monitor"
+class CryptocurrencyListTool(BaseTool):
+    name: str = "crypto_list"
     description: str = (
-        "Use this tool to monitor recent statements or actions from key market influencers "
-        "like Elon Musk, Jerome Powell, business leaders, or government officials."
+        "Use this tool to get a list of top cryptocurrencies by market cap. "
+        "You can filter by category and limit the number of results."
     )
-    args_schema: Type[BaseModel] = InfluencerMonitorInput
-    bing_search: BingSearchAPIWrapper = None
+    args_schema: Type[BaseModel] = CryptocurrencyListInput
 
-    def __init__(self):
-        super().__init__()
-        self.bing_search = BingSearchAPIWrapper(
-            bing_subscription_key=os.getenv('BING_SUBSCRIPTION_KEY'),
-            bing_search_url="https://api.bing.microsoft.com/v7.0/search"
-        )
-
-    def _run(self, person: str) -> str:
-        """Run the tool with caching mechanism"""
-        cache_dir = ".cache/influencers"
+    def _run(self, limit: int = 100, category: Optional[str] = None) -> str:
+        """Run the tool to get list of cryptocurrencies"""
+        cache_dir = ".cache/crypto_lists"
         os.makedirs(cache_dir, exist_ok=True)
         
-        # Create a safe filename
-        safe_name = "".join(x for x in person if x.isalnum() or x.isspace()).lower().replace(" ", "_")
-        cache_file = f"{cache_dir}/{safe_name}.json"
+        # Create a cache key
+        cache_key = f"top_{limit}"
+        if category:
+            cache_key += f"_{category.lower()}"
+        cache_file = f"{cache_dir}/{cache_key}.json"
         
-        # Check if we have a recent cached result (less than 4 hours old)
+        # Check if we have a recent cached result (less than 6 hours old)
         if os.path.exists(cache_file):
             file_time = datetime.fromtimestamp(os.path.getmtime(cache_file))
-            if datetime.now() - file_time < timedelta(hours=4):
+            if datetime.now() - file_time < timedelta(hours=6):
                 with open(cache_file, 'r') as f:
                     return f.read()
         
         # If no cache or cache is old, make the actual API call
         try:
-            # Craft a query focused on recent statements/actions with market impact
-            query = f"{person} recent statement market finance economy (site:cnbc.com OR site:bloomberg.com OR site:reuters.com OR site:ft.com OR site:wsj.com)"
-            results = self.bing_search.run(query)
+            # Using CoinMarketCap API
+            api_key = os.getenv('COINMARKETCAP_API_KEY')
+            url = "https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest"
+            
+            headers = {
+                'X-CMC_PRO_API_KEY': api_key,
+                'Accept': 'application/json'
+            }
+            
+            params = {
+                'limit': min(limit, 5000),  # Cap at 5000 which is CMC's max
+                'convert': 'USD',
+                'sort': 'market_cap',
+                'sort_dir': 'desc'
+            }
+            
+            # Add category filter if provided
+            if category:
+                # In production, map common category names to CMC's category IDs
+                # For simplicity, we're using the category name directly
+                params['cryptocurrency_type'] = category
+            
+            response = requests.get(url, headers=headers, params=params)
+            data = response.json()
             
             # Create logs directory if it doesn't exist
             os.makedirs(".logs", exist_ok=True)
             
             # Log usage
-            with open(".logs/bing_usage.log", "a") as log:
-                log.write(f"{datetime.now().isoformat()},influencer,{person}\n")
+            with open(".logs/coinmarketcap_usage.log", "a") as log:
+                log.write(f"{datetime.now().isoformat()},list,limit={limit},category={category}\n")
             
-            # Cache the results
-            with open(cache_file, 'w') as f:
-                f.write(results)
+            # Format the response
+            if 'data' in data:
+                # Extract relevant info from each cryptocurrency
+                results = []
+                for crypto in data['data']:
+                    quote = crypto['quote']['USD']
+                    results.append({
+                        "symbol": crypto['symbol'],
+                        "name": crypto['name'],
+                        "price": quote['price'],
+                        "market_cap": quote['market_cap'],
+                        "volume_24h": quote['volume_24h'],
+                        "percent_change_24h": quote['percent_change_24h'],
+                        "category": crypto.get('category', None)
+                    })
                 
-            return results
+                formatted_result = json.dumps({"cryptocurrencies": results}, indent=2)
+                
+                # Cache the result
+                with open(cache_file, 'w') as f:
+                    f.write(formatted_result)
+                
+                return formatted_result
+            else:
+                error_message = data.get('status', {}).get('error_message', "Could not retrieve cryptocurrency list")
+                return f"Error: {error_message}"
+                
         except Exception as e:
-            return f"Error monitoring influencer: {str(e)}"
+            return f"Error retrieving cryptocurrency list: {str(e)}"

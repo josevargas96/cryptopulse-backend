@@ -1,0 +1,24 @@
+{
+  "risk_tolerance": "aggressive",
+  "preferred_categories": ["Layer 1", "DeFi", "Gaming"],
+  "investment_horizon": "medium-term",
+  "max_position_size": 50,
+  "min_position_size": 2,
+  "allow_short_positions": false,
+  "rebalance_frequency": "weekly",
+  "market_view": {
+    "bitcoin_dominance": "decreasing",
+    "altcoin_season": "beginning",
+    "macro_environment": "risk_on"
+  },
+  "technical_preferences": {
+    "use_moving_averages": true,
+    "consider_volume": true,
+    "rsi_threshold": 30
+  },
+  "blockchain_preferences": {
+    "prioritize_proven_tech": "moderate",
+    "staking_rewards": "important",
+    "tokenomics_focus": "high"
+  }
+}

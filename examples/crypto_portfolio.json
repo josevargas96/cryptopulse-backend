@@ -1,0 +1,84 @@
+{
+  "holdings": [
+    {
+      "symbol": "BTC",
+      "name": "Bitcoin",
+      "allocation": 40,
+      "category": "Layer 1",
+      "purchase_price": 42580.75,
+      "amount": 0.5
+    },
+    {
+      "symbol": "ETH",
+      "name": "Ethereum",
+      "allocation": 30,
+      "category": "Layer 1",
+      "purchase_price": 2350.15,
+      "amount": 5.2
+    },
+    {
+      "symbol": "SOL",
+      "name": "Solana",
+      "allocation": 10,
+      "category": "Layer 1",
+      "purchase_price": 95.30,
+      "amount": 45.0
+    },
+    {
+      "symbol": "LINK",
+      "name": "Chainlink",
+      "allocation": 5,
+      "category": "Oracle",
+      "purchase_price": 14.75,
+      "amount": 150.0
+    },
+    {
+      "symbol": "UNI",
+      "name": "Uniswap",
+      "allocation": 3,
+      "category": "DeFi",
+      "purchase_price": 7.85,
+      "amount": 120.0
+    },
+    {
+      "symbol": "AAVE",
+      "name": "Aave",
+      "allocation": 3,
+      "category": "DeFi",
+      "purchase_price": 85.20,
+      "amount": 15.0
+    },
+    {
+      "symbol": "MATIC",
+      "name": "Polygon",
+      "allocation": 3,
+      "category": "Layer 2",
+      "purchase_price": 0.85,
+      "amount": 2500.0
+    },
+    {
+      "symbol": "DOT",
+      "name": "Polkadot",
+      "allocation": 2,
+      "category": "Interoperability",
+      "purchase_price": 6.45,
+      "amount": 175.0
+    },
+    {
+      "symbol": "AXS",
+      "name": "Axie Infinity",
+      "allocation": 2,
+      "category": "Gaming",
+      "purchase_price": 7.30,
+      "amount": 85.0
+    },
+    {
+      "symbol": "USDC",
+      "name": "USD Coin",
+      "allocation": 2,
+      "category": "Stablecoin",
+      "purchase_price": 1.00,
+      "amount": 1000.0
+    }
+  ]
+}

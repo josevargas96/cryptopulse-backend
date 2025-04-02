@@ -43,8 +43,8 @@ cp .env.template .env
 ### 3. Create Portfolio and Preferences Files
 
 See examples in the `examples/` directory:
-- `portfolio.json`: Your cryptocurrency holdings
-- `preferences.json`: Your investment preferences
+- `crypto_portfolio.json`: Your cryptocurrency holdings
+- `crypto_preferences.json`: Your investment preferences
 
 ### 4. Running the Application
 
@@ -52,7 +52,7 @@ See examples in the `examples/` directory:
 
 ```bash
 # Run a one-time analysis
-python -m src.marketpulse.cli --portfolio examples/portfolio.json --preferences examples/preferences.json --output analysis.json
+python -m src.marketpulse.cli --portfolio examples/crypto_portfolio.json --preferences examples/crypto_preferences.json --output analysis.json
 ```
 
 #### As a Web Service:
